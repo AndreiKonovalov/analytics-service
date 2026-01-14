@@ -86,6 +86,9 @@ public class Transaction {
             foreignKey = @ForeignKey(name = "fk_transaction_category"))
     private Category category;
 
+    // Денормализованное поле для оптимизации запросов по клиенту.
+    // Позволяет избежать JOIN к accounts при аналитике.
+    // Согласованность поддерживается на уровне сервиса.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_transaction_client"))
@@ -166,11 +169,4 @@ public class Transaction {
         this.suspicionReason = reason;
     }
 
-    // Хелпер для установки связи с account и client
-    public void setAccount(Account account) {
-        this.account = account;
-        if (account != null && account.getClient() != null) {
-            this.client = account.getClient();
-        }
-    }
 }

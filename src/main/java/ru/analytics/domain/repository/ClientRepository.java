@@ -26,7 +26,7 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
 
     @EntityGraph(attributePaths = {"accounts", "segments"})
     @Query("SELECT c FROM Client c WHERE c.id IN :ids")
-    List<Client> findAllWithDetails(@Param("ids") List<Long> ids);
+    List<Client> findAllWithDetailsEntityGraph(@Param("ids") List<Long> ids);
 
     @EntityGraph(attributePaths = {"accounts"})
     @Query("SELECT c FROM Client c WHERE c.id = :id")
@@ -88,11 +88,11 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
     List<Object[]> getClientStatistics(@Param("minTransactions") int minTransactions);
 
     // Оптимизированный запрос для получения клиентов с деталями
-//    @Query("SELECT DISTINCT c FROM Client c " +
-//            "LEFT JOIN FETCH c.transactions " +
-//            "LEFT JOIN FETCH c.accounts " +
-//            "WHERE c.id IN :ids")
-//    List<Client> findAllWithDetails(@Param("ids") List<Long> ids);
+    @Query("SELECT DISTINCT c FROM Client c " +
+            "LEFT JOIN FETCH c.transactions " +
+            "LEFT JOIN FETCH c.accounts " +
+            "WHERE c.id IN :ids")
+    List<Client> findAllWithDetails(@Param("ids") List<Long> ids);
 
     // Получение только ID клиентов (для оптимизации)
     @Query("SELECT c.id FROM Client c")

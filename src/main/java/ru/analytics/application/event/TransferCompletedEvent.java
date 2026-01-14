@@ -3,20 +3,21 @@ package ru.analytics.application.event;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
+import ru.analytics.application.dto.TransferRequest;
 
 import java.time.LocalDateTime;
 
 @Getter
 public class TransferCompletedEvent extends ApplicationEvent {
 
-    private final ru.analytics.application.dto.TransferRequest transferRequest;
+    private final TransferRequest transferRequest;
     private final String externalReference;
     private final LocalDateTime operationTime;
     private final boolean success;
     private final String errorMessage;
 
     public TransferCompletedEvent(Object source,
-                                  ru.analytics.application.dto.TransferRequest transferRequest,
+                                  TransferRequest transferRequest,
                                   String externalReference,
                                   LocalDateTime operationTime) {
         super(source);
@@ -28,7 +29,7 @@ public class TransferCompletedEvent extends ApplicationEvent {
     }
 
     public TransferCompletedEvent(Object source,
-                                  ru.analytics.application.dto.TransferRequest transferRequest,
+                                  TransferRequest transferRequest,
                                   String errorMessage) {
         super(source);
         this.transferRequest = transferRequest;

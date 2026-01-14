@@ -62,7 +62,7 @@ public class OptimizedReportService {
         }
 
         // ХОРОШО: EntityGraph с указанием только нужных связей
-        List<Client> clients = clientRepository.findAllWithDetails(clientIds);
+        List<Client> clients = clientRepository.findAllWithDetailsEntityGraph(clientIds);
 
         // Преобразование в DTO с использованием Stream API
         List<ClientReportDTO> dtos = clients.stream()

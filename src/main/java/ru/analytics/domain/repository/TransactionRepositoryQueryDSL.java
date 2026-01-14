@@ -1,7 +1,6 @@
 package ru.analytics.domain.repository;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -19,37 +18,49 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-public class TransactionRepositoryImpl implements TransactionRepositoryCustom {
+public class TransactionRepositoryQueryDSL {
 
     @PersistenceContext
     private final EntityManager em;
 
-    @Override
     public List<TransactionAggregate> aggregateByCategory(LocalDateTime from, LocalDateTime to) {
         JPAQueryFactory queryFactory = new JPAQueryFactory(em);
         QTransaction t = QTransaction.transaction;
         ru.analytics.domain.model.QCategory c =
                 ru.analytics.domain.model.QCategory.category;
 
-        return queryFactory
-                .select(Projections.constructor(
-                        TransactionAggregate.class,
+        List<com.querydsl.core.Tuple> results = queryFactory
+                .select(
                         c.name,
-                        t.amount.sum(),
+                        t.amount.sum().coalesce(BigDecimal.ZERO),
                         t.count(),
-                        t.amount.avg(),
-                        t.amount.min(),
-                        t.amount.max()
-                ))
+                        t.amount.avg().coalesce(0.0),
+                        t.amount.min().coalesce(BigDecimal.ZERO),
+                        t.amount.max().coalesce(BigDecimal.ZERO)
+                )
                 .from(t)
                 .join(t.category, c)
                 .where(t.createdAt.between(from, to))
                 .groupBy(c.name)
                 .orderBy(t.amount.sum().desc())
                 .fetch();
+
+        // Конвертируем Tuple вручную
+        return results.stream()
+                .map(tuple -> {
+                    Double avg = tuple.get(3, Double.class);
+                    return new TransactionAggregate(
+                            tuple.get(c.name),
+                            tuple.get(t.amount.sum().coalesce(BigDecimal.ZERO)),
+                            tuple.get(t.count()),
+                            avg != null ? BigDecimal.valueOf(avg) : BigDecimal.ZERO,
+                            tuple.get(t.amount.min().coalesce(BigDecimal.ZERO)),
+                            tuple.get(t.amount.max().coalesce(BigDecimal.ZERO))
+                    );
+                })
+                .toList();
     }
 
-    @Override
     public List<Transaction> findTransactionsByCriteria(
             Long accountId,
             LocalDateTime from,
@@ -102,7 +113,6 @@ public class TransactionRepositoryImpl implements TransactionRepositoryCustom {
                 .fetch();
     }
 
-    @Override
     public List<Object[]> findClientSpendingPatterns(Long clientId, int months) {
         QTransaction t = QTransaction.transaction;
         JPAQueryFactory queryFactory = new JPAQueryFactory(em);
@@ -147,7 +157,6 @@ public class TransactionRepositoryImpl implements TransactionRepositoryCustom {
                 .toList();
     }
 
-    @Override
     public List<Transaction> findSimilarTransactions(Transaction transaction, int similarityThreshold) {
         QTransaction t = QTransaction.transaction;
         JPAQueryFactory queryFactory = new JPAQueryFactory(em);

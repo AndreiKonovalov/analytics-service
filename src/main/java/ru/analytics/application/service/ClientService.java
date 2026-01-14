@@ -6,11 +6,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.analytics.application.dto.ClientDetailsDTO;
+import ru.analytics.application.dto.ClientResponseDTO;
 import ru.analytics.domain.model.Client;
 import ru.analytics.domain.repository.ClientRepository;
 import ru.analytics.exception.ClientNotFoundException;
 import ru.analytics.infrastructure.web.dto.ClientCreateRequest;
 import ru.analytics.infrastructure.web.dto.ClientUpdateRequest;
+import ru.analytics.infrastructure.web.mapper.ClientMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,9 +24,10 @@ import java.util.List;
 public class ClientService {
 
     private final ClientRepository clientRepository;
+    private final ClientMapper clientMapper;
 
     @Transactional
-    public Client createClient(ClientCreateRequest request) {
+    public ClientResponseDTO createClient(ClientCreateRequest request) {
         log.debug("Создание клиента: {}", request.getEmail());
 
         // Проверяем, существует ли уже клиент с таким email
@@ -43,11 +47,12 @@ public class ClientService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        return clientRepository.save(client);
+        client = clientRepository.save(client);
+        return clientMapper.toResponseDTO(client);
     }
 
     @Transactional
-    public Client updateClient(Long id, ClientUpdateRequest request) {
+    public ClientResponseDTO updateClient(Long id, ClientUpdateRequest request) {
         log.debug("Обновление клиента с ID: {}", id);
 
         Client client = clientRepository.findById(id)
@@ -83,12 +88,12 @@ public class ClientService {
 
         client.setUpdatedAt(LocalDateTime.now());
 
-        return clientRepository.save(client);
+        client = clientRepository.save(client);
+        return clientMapper.toResponseDTO(client);
     }
 
     @Transactional
-    public Client partialUpdateClient(Long id, ClientUpdateRequest request) {
-        // Используем ту же логику, что и в updateClient
+    public ClientResponseDTO partialUpdateClient(Long id, ClientUpdateRequest request) {
         return updateClient(id, request);
     }
 
@@ -104,48 +109,65 @@ public class ClientService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Client> getAllClients(Pageable pageable) {
+    public Page<ClientResponseDTO> getAllClients(Pageable pageable) {
         log.debug("Получение всех клиентов, страница: {}", pageable.getPageNumber());
-        return clientRepository.findAll(pageable);
+        return clientRepository.findAll(pageable)
+                .map(clientMapper::toResponseDTO);
     }
 
     @Transactional(readOnly = true)
-    public Client getClientById(Long id) {
+    public ClientResponseDTO getClientById(Long id) {
         log.debug("Получение клиента по ID: {}", id);
-        return clientRepository.findById(id)
+        Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ClientNotFoundException(id));
+        return clientMapper.toResponseDTO(client);
     }
 
     @Transactional(readOnly = true)
-    public Client getClientByEmail(String email) {
+    public ClientResponseDTO getClientByEmail(String email) {
         log.debug("Получение клиента по email: {}", email);
-        return clientRepository.findByEmail(email)
+        Client client = clientRepository.findByEmail(email)
                 .orElseThrow(() -> new ClientNotFoundException("Клиент с email " + email + " не найден"));
+        return clientMapper.toResponseDTO(client);
     }
 
     @Transactional(readOnly = true)
-    public List<Client> getClientsByRiskLevel(String riskLevel) {
+    public List<ClientResponseDTO> getClientsByRiskLevel(String riskLevel) {
         log.debug("Получение клиентов по уровню риска: {}", riskLevel);
-        return clientRepository.findByRiskLevel(riskLevel);
+        return clientMapper.toResponseDTOList(
+                clientRepository.findByRiskLevel(riskLevel)
+        );
     }
 
     @Transactional(readOnly = true)
-    public List<Client> getVerifiedClients() {
+    public List<ClientResponseDTO> getVerifiedClients() {
         log.debug("Получение верифицированных клиентов");
-        return clientRepository.findByKycStatus("VERIFIED");
+        return clientMapper.toResponseDTOList(
+                clientRepository.findByKycStatus("VERIFIED")
+        );
     }
 
     @Transactional(readOnly = true)
-    public List<Client> getClientsWithDetails() {
+    public List<ClientDetailsDTO> getClientsWithDetails() {
         log.debug("Получение клиентов с деталями (оптимизированный запрос)");
+
         // Получаем ID всех клиентов
         List<Long> clientIds = clientRepository.findAllIds();
 
-        if (clientIds.isEmpty()) {
+        // Ограничиваем для производительности
+        List<Long> limitedIds = clientIds.stream()
+                .limit(10)
+                .toList();
+
+        if (limitedIds.isEmpty()) {
             return List.of();
         }
 
         // Используем оптимизированный запрос с JOIN FETCH
-        return clientRepository.findAllWithDetails(clientIds);
+        List<Client> clients = clientRepository.findAllWithDetails(limitedIds);
+
+        return clients.stream()
+                .map(clientMapper::toDetailsDTO)
+                .toList();
     }
 }

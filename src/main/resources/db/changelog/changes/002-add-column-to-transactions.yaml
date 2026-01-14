@@ -56,6 +56,10 @@ databaseChangeLog:
         - dropIndex:
             tableName: transactions
             indexName: idx_transaction_account_created
+          preConditions:
+            - indexExists:
+                tableName: transactions
+                indexName: idx_transaction_account_created
 
         - createIndex:
             tableName: transactions

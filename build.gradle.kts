@@ -73,6 +73,14 @@ dependencies {
     // OpenAPI/Swagger документация
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
 
+    // MapStruct
+    implementation("org.mapstruct:mapstruct:1.5.5.Final")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
+    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
+
+    // Для работы с коллекциями
+    implementation("org.mapstruct:mapstruct-processor:1.5.5.Final")
+
     // Тестирование
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.testcontainers:postgresql")
@@ -138,9 +146,3 @@ tasks.test {
 tasks.compileJava {
     dependsOn(tasks.processResources)
 }
-
-//// Если всё равно есть проблемы, можно попробовать такую конфигурацию:
-//tasks.named("compileJava") {
-//    // Генерация Q-классов QueryDSL
-//    options.annotationProcessorGeneratedSourcesDirectory = file(querydslDir)
-//}
