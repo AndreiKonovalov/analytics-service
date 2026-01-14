@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fintech-analytics.fullname" . }}-config
+  namespace: {{ .Release.Namespace | default "fintech" }}
+  labels:
+    {{- include "fintech-analytics.labels" . | nindent 4 }}
+data:
+  application.yml: |
+    spring:
+      application:
+        name: {{ .Values.app.name }}
+    
+      datasource:
+        hikari:
+          maximum-pool-size: {{ .Values.database.maxConnections | default 20 }}
+          connection-timeout: {{ .Values.database.connectionTimeout | default 30000 }}
+    
+      jpa:
+        properties:
+          hibernate:
+            generate_statistics: {{ .Values.features.queryMetrics | default false }}
+            session.events.log.LOG_QUERIES_SLOWER_THAN_MS: {{ if .Values.features.slowQueryLogging }}100{{ else }}0{{ end }}
+    
+    management:
+      metrics:
+        export:
+          prometheus:
+            enabled: true
+        tags:
+          application: {{ .Values.app.name }}
+          environment: {{ .Values.global.environment }}
+    
+      tracing:
+        sampling:
+          probability: {{ if .Values.features.transactionTracing }}0.1{{ else }}0.0{{ end }}
+    
+    logging:
+      level:
+        {{- range $key, $value := .Values.logging.level }}
+        {{ $key }}: {{ $value }}
+        {{- end }}
+      pattern:
+        {{- if eq .Values.logging.format "json" }}
+        console: '{"@timestamp":"%d{yyyy-MM-dd HH:mm:ss.SSS}","level":"%level","logger":"%logger","message":"%message","stack_trace":"%exception","environment":"{{ .Values.global.environment }}","service":"{{ .Values.app.name }}"}'
+        {{- else }}
+        console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+        {{- end }}

@@ -1,0 +1,104 @@
+# Конфигурация для Windows/Docker Desktop
+global:
+  environment: windows-dev
+  domain: local
+
+app:
+  name: analytics-service
+  replicaCount: 1  # Одна реплика для экономии ресурсов
+  image:
+    repository: fintech/analytics-service
+    tag: windows-latest
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort  # NodePort для доступа с хоста
+    port: 8080
+    nodePort: 30080  # Фиксированный порт
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    hosts:
+      - host: analytics.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  autoscaling:
+    enabled: false  # Отключаем для локальной разработки
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "windows,kubernetes"
+    - name: JAVA_OPTS
+      value: "-Xmx512m -Xms256m -XX:+UseG1GC"
+    - name: SPRING_JPA_SHOW_SQL
+      value: "true"
+    - name: SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL
+      value: "true"
+    - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+      value: "health,metrics,prometheus,info,env,beans"
+    - name: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
+      value: "always"
+
+database:
+  enabled: true  # Включаем встроенную базу данных
+  type: postgresql
+  host: postgresql
+  port: 5432
+  name: fintech_analytics
+  username: postgres
+  password: postgres123
+  persistence:
+    enabled: true
+    size: 5Gi
+
+postgresql:
+  enabled: true
+  image:
+    tag: 16-alpine
+  auth:
+    database: fintech_analytics
+    username: postgres
+    password: postgres123
+  primary:
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+
+redis:
+  enabled: false  # Отключаем для экономии ресурсов
+
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
+
+# UI Dashboard для обучения
+dashboard:
+  enabled: true
+  image:
+    repository: kubernetesui/dashboard
+    tag: v2.7.0
+  service:
+    type: NodePort
+    nodePort: 30081
+  ingress:
+    enabled: true
+    hosts:
+      - host: dashboard.local
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "false"

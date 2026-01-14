@@ -1,4 +1,7 @@
 package ru.analytics.domain.repository;
 
-public interface CategoryRepository extends org.springframework.data.jpa.repository.JpaRepository<ru.analytics.domain.model.Category, java.lang.Long> {
+import org.springframework.data.jpa.repository.JpaRepository;
+import ru.analytics.domain.model.Category;
+
+public interface CategoryRepository extends JpaRepository<Category, Long> {
 }

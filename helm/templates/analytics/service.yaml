@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fintech-analytics.fullname" . }}
+  namespace: {{ .Release.Namespace | default "fintech" }}
+  labels:
+    {{- include "fintech-analytics.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.app.service.annotations }}
+      {{- toYaml . | nindent 4 }}
+      {{- end }}
+spec:
+  type: {{ .Values.app.service.type }}
+  ports:
+    - port: {{ .Values.app.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "fintech-analytics.selectorLabels" . | nindent 4 }}

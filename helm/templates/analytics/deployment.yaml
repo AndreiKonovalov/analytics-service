@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fintech-analytics.fullname" . }}
+  namespace: {{ .Release.Namespace | default "fintech" }}
+  labels:
+    {{- include "fintech-analytics.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  revisionHistoryLimit: {{ .Values.app.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "fintech-analytics.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: {{ if gt .Values.app.replicaCount 1 }}1{{ else }}0{{ end }}
+  template:
+    metadata:
+      labels:
+        {{- include "fintech-analytics.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{- with .Values.app.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+          {{- end }}
+          checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "fintech-analytics.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.app.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.app.securityContext | nindent 10 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.service.port }}
+              protocol: TCP
+          env:
+            {{- include "fintech-analytics.envVars" . | nindent 10 }}
+          {{- if .Values.externalServices.auditService.enabled }}
+          - name: AUDIT_SERVICE_URL
+            value: {{ .Values.externalServices.auditService.url | quote }}
+          {{- end }}
+          {{- if .Values.externalServices.notificationService.enabled }}
+          - name: NOTIFICATION_SERVICE_URL
+            value: {{ .Values.externalServices.notificationService.url | quote }}
+          {{- end }}
+          {{- if .Values.externalServices.fraudDetectionService.enabled }}
+          - name: FRAUD_DETECTION_SERVICE_URL
+            value: {{ .Values.externalServices.fraudDetectionService.url | quote }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.app.resources | nindent 10 }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config
+            - name: logs
+              mountPath: /app/logs
+          {{- with .Values.app.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- with .Values.app.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- with .Values.app.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "fintech-analytics.fullname" . }}-config
+      - name: logs
+      emptyDir: {}
+      {{- with .Values.app.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.app.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.app.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

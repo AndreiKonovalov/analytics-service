@@ -1,4 +1,7 @@
 package ru.analytics.domain.repository;
 
-public interface SegmentRepository extends org.springframework.data.jpa.repository.JpaRepository<ru.analytics.domain.model.Segment, java.lang.Long> {
+import org.springframework.data.jpa.repository.JpaRepository;
+import ru.analytics.domain.model.Segment;
+
+public interface SegmentRepository extends JpaRepository<Segment, Long> {
 }

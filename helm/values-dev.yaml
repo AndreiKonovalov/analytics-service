@@ -1,0 +1,42 @@
+global:
+  environment: development
+
+app:
+  replicaCount: 1
+  image:
+    tag: dev-latest
+  service:
+    type: NodePort
+  ingress:
+    enabled: false
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "250m"
+  autoscaling:
+    enabled: false
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "dev,kubernetes"
+    - name: SPRING_JPA_SHOW_SQL
+      value: "true"
+    - name: SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL
+      value: "true"
+
+database:
+  external:
+    enabled: false
+  initialization:
+    enabled: true
+
+monitoring:
+  enabled: false
+
+logging:
+  level:
+    ru.analytics: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

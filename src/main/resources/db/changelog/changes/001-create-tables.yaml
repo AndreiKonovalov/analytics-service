@@ -1,0 +1,533 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-sequences
+      author: fintech-team
+      changes:
+        - createSequence:
+            sequenceName: client_sequence
+            startValue: 1
+            incrementBy: 50
+            cacheSize: 50
+
+        - createSequence:
+            sequenceName: account_sequence
+            startValue: 1
+            incrementBy: 50
+            cacheSize: 50
+
+        - createSequence:
+            sequenceName: transaction_sequence
+            startValue: 1
+            incrementBy: 100
+            cacheSize: 100
+
+        - createSequence:
+            sequenceName: category_sequence
+            startValue: 1
+            incrementBy: 10
+            cacheSize: 10
+
+        - createSequence:
+            sequenceName: tag_sequence
+            startValue: 1
+            incrementBy: 10
+            cacheSize: 10
+
+        - createSequence:
+            sequenceName: segment_sequence
+            startValue: 1
+            incrementBy: 10
+            cacheSize: 10
+
+  - changeSet:
+      id: 002-create-clients-table
+      author: fintech-team
+      changes:
+        - createTable:
+            tableName: clients
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: phone_number
+                  type: varchar(20)
+              - column:
+                  name: tax_identification_number
+                  type: varchar(20)
+                  constraints:
+                    unique: true
+              - column:
+                  name: date_of_birth
+                  type: date
+              - column:
+                  name: risk_level
+                  type: varchar(10)
+              - column:
+                  name: kyc_status
+                  type: varchar(20)
+              - column:
+                  name: created_at
+                  type: timestamp
+              - column:
+                  name: updated_at
+                  type: timestamp
+
+  - changeSet:
+      id: 003-create-accounts-table
+      author: fintech-team
+      changes:
+        - createTable:
+            tableName: accounts
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: account_number
+                  type: varchar(34)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: balance
+                  type: numeric(19,4)
+                  defaultValueNumeric: 0
+              - column:
+                  name: credit_limit
+                  type: numeric(19,4)
+                  defaultValueNumeric: 0
+              - column:
+                  name: account_type
+                  type: varchar(20)
+              - column:
+                  name: currency_code
+                  type: varchar(3)
+              - column:
+                  name: is_active
+                  type: boolean
+                  defaultValueBoolean: true
+              - column:
+                  name: client_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_account_client
+                    references: clients(id)
+              - column:
+                  name: created_at
+                  type: timestamp
+              - column:
+                  name: updated_at
+                  type: timestamp
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+
+  - changeSet:
+      id: 004-create-categories-table
+      author: fintech-team
+      changes:
+        - createTable:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: code
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: varchar(500)
+              - column:
+                  name: parent_category_id
+                  type: bigint
+              - column:
+                  name: transaction_type
+                  type: varchar(20)
+              - column:
+                  name: created_at
+                  type: timestamp
+              - column:
+                  name: updated_at
+                  type: timestamp
+
+  - changeSet:
+      id: 005-create-transactions-table
+      author: fintech-team
+      changes:
+        - createTable:
+            tableName: transactions
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: account_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_transaction_account
+                    references: accounts(id)
+              - column:
+                  name: amount
+                  type: numeric(19,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency_code
+                  type: varchar(3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(20)
+              - column:
+                  name: category_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: fk_transaction_category
+                    references: categories(id)
+              - column:
+                  name: description
+                  type: varchar(500)
+              - column:
+                  name: counterparty_account
+                  type: varchar(34)
+              - column:
+                  name: counterparty_name
+                  type: varchar(200)
+              - column:
+                  name: status
+                  type: varchar(20)
+              - column:
+                  name: external_reference_id
+                  type: varchar(50)
+                  constraints:
+                    unique: true
+              - column:
+                  name: is_suspicious
+                  type: boolean
+                  defaultValueBoolean: false
+              - column:
+                  name: suspicion_reason
+                  type: varchar(500)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: executed_at
+                  type: timestamp
+              - column:
+                  name: updated_at
+                  type: timestamp
+
+  - changeSet:
+      id: 006-create-tags-table
+      author: fintech-team
+      changes:
+        - createTable:
+            tableName: tags
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: color
+                  type: varchar(7)
+              - column:
+                  name: created_at
+                  type: timestamp
+
+  - changeSet:
+      id: 007-create-segments-table
+      author: fintech-team
+      changes:
+        - createTable:
+            tableName: segments
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: code
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: varchar(500)
+              - column:
+                  name: minimum_balance
+                  type: numeric(19,4)
+              - column:
+                  name: minimum_monthly_turnover
+                  type: numeric(19,4)
+              - column:
+                  name: created_at
+                  type: timestamp
+
+  - changeSet:
+      id: 008-create-transaction-tags-table
+      author: fintech-team
+      changes:
+        - createTable:
+            tableName: transaction_tags
+            columns:
+              - column:
+                  name: transaction_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_transaction_tag_transaction
+                    references: transactions(id)
+                    deleteCascade: true
+              - column:
+                  name: tag_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_transaction_tag_tag
+                    references: tags(id)
+                    deleteCascade: true
+        - addPrimaryKey:
+            tableName: transaction_tags
+            columnNames: transaction_id, tag_id
+            constraintName: pk_transaction_tags
+
+  - changeSet:
+      id: 009-create-client-segments-table
+      author: fintech-team
+      changes:
+        - createTable:
+            tableName: client_segments
+            columns:
+              - column:
+                  name: client_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_client_segment_client
+                    references: clients(id)
+                    deleteCascade: true
+              - column:
+                  name: segment_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_client_segment_segment
+                    references: segments(id)
+                    deleteCascade: true
+        - addPrimaryKey:
+            tableName: client_segments
+            columnNames: client_id, segment_id
+            constraintName: pk_client_segments
+
+  - changeSet:
+      id: 010-create-indexes
+      author: fintech-team
+      changes:
+        - createIndex:
+            tableName: clients
+            indexName: idx_client_email
+            columns:
+              - column:
+                  name: email
+
+        - createIndex:
+            tableName: clients
+            indexName: idx_client_tax_id
+            columns:
+              - column:
+                  name: tax_identification_number
+
+        - createIndex:
+            tableName: accounts
+            indexName: idx_account_client_id
+            columns:
+              - column:
+                  name: client_id
+
+        - createIndex:
+            tableName: accounts
+            indexName: idx_account_number
+            columns:
+              - column:
+                  name: account_number
+            unique: true
+
+        - createIndex:
+            tableName: accounts
+            indexName: idx_account_active_balance
+            columns:
+              - column:
+                  name: is_active
+              - column:
+                  name: balance
+
+        - createIndex:
+            tableName: transactions
+            indexName: idx_transaction_created_at
+            columns:
+              - column:
+                  name: created_at
+
+        - createIndex:
+            tableName: transactions
+            indexName: idx_transaction_amount
+            columns:
+              - column:
+                  name: amount
+
+        - createIndex:
+            tableName: transactions
+            indexName: idx_transaction_account_created
+            columns:
+              - column:
+                  name: account_id
+              - column:
+                  name: created_at
+
+        - createIndex:
+            tableName: transactions
+            indexName: idx_transaction_category
+            columns:
+              - column:
+                  name: category_id
+
+        - createIndex:
+            tableName: transactions
+            indexName: idx_transaction_status
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            tableName: transactions
+            indexName: idx_transaction_ref_id
+            columns:
+              - column:
+                  name: external_reference_id
+            unique: true
+
+        - createIndex:
+            tableName: transactions
+            indexName: idx_transaction_suspicious_date
+            columns:
+              - column:
+                  name: is_suspicious
+              - column:
+                  name: created_at
+
+  - changeSet:
+      id: 011-insert-initial-data
+      author: fintech-team
+      changes:
+        - sql:
+            sql: |
+              -- Вставляем начальные категории
+              INSERT INTO categories (id, name, code, description, transaction_type, created_at, updated_at) 
+              VALUES 
+                (nextval('category_sequence'), 'Продукты', 'FOOD', 'Покупка продуктов питания', 'DEBIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Рестораны и кафе', 'RESTAURANT', 'Питание вне дома', 'DEBIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Транспорт', 'TRANSPORT', 'Общественный транспорт, такси, бензин', 'DEBIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Развлечения', 'ENTERTAINMENT', 'Кино, театры, концерты', 'DEBIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Одежда и обувь', 'CLOTHING', 'Покупка одежды и обуви', 'DEBIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Здоровье', 'HEALTH', 'Медицинские услуги, лекарства', 'DEBIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Образование', 'EDUCATION', 'Курсы, книги, обучение', 'DEBIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Жилье', 'HOUSING', 'Аренда, коммунальные услуги', 'DEBIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Зарплата', 'SALARY', 'Заработная плата', 'CREDIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Переводы', 'TRANSFER', 'Денежные переводы', 'BOTH', NOW(), NOW()),
+                (nextval('category_sequence'), 'Возврат', 'REFUND', 'Возврат средств', 'CREDIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Кэшбэк', 'CASHBACK', 'Кэшбэк и бонусы', 'CREDIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Комиссия', 'FEE', 'Банковские комиссии', 'DEBIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Проценты', 'INTEREST', 'Проценты по вкладам', 'CREDIT', NOW(), NOW()),
+                (nextval('category_sequence'), 'Дивиденды', 'DIVIDEND', 'Дивиденды от инвестиций', 'CREDIT', NOW(), NOW());
+
+        - sql:
+            sql: |
+              -- Вставляем теги
+              INSERT INTO tags (id, name, color, created_at) 
+              VALUES 
+                (nextval('tag_sequence'), 'подозрительная', '#FF6B6B', NOW()),
+                (nextval('tag_sequence'), 'крупная сумма', '#FFD166', NOW()),
+                (nextval('tag_sequence'), 'регулярная', '#06D6A0', NOW()),
+                (nextval('tag_sequence'), 'срочная', '#118AB2', NOW()),
+                (nextval('tag_sequence'), 'международная', '#073B4C', NOW()),
+                (nextval('tag_sequence'), 'онлайн', '#7209B7', NOW()),
+                (nextval('tag_sequence'), 'оффлайн', '#F72585', NOW()),
+                (nextval('tag_sequence'), 'автоплатеж', '#4CC9F0', NOW());
+
+        - sql:
+            sql: |
+              -- Вставляем сегменты клиентов
+              INSERT INTO segments (id, name, code, description, minimum_balance, minimum_monthly_turnover, created_at) 
+              VALUES 
+                (nextval('segment_sequence'), 'Стандартный', 'STANDARD', 'Базовый сегмент для новых клиентов', 0, 0, NOW()),
+                (nextval('segment_sequence'), 'Премиум', 'PREMIUM', 'Для клиентов с высоким балансом', 100000, 500000, NOW()),
+                (nextval('segment_sequence'), 'VIP', 'VIP', 'Эксклюзивный сегмент', 1000000, 5000000, NOW()),
+                (nextval('segment_sequence'), 'Студенческий', 'STUDENT', 'Специальные условия для студентов', 0, 0, NOW()),
+                (nextval('segment_sequence'), 'Пенсионный', 'PENSIONER', 'Льготные условия для пенсионеров', 0, 0, NOW()),
+                (nextval('segment_sequence'), 'Бизнес', 'BUSINESS', 'Для корпоративных клиентов', 500000, 2000000, NOW()),
+                (nextval('segment_sequence'), 'Инвестор', 'INVESTOR', 'Для клиентов с инвестиционными продуктами', 500000, 1000000, NOW()),
+                (nextval('segment_sequence'), 'Путешественник', 'TRAVELER', 'Специальные условия для частых поездок', 100000, 300000, NOW());
