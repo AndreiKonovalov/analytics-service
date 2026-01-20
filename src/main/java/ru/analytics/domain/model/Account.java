@@ -72,7 +72,7 @@ public class Account {
     private boolean isActive = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "fk_account_client"))
+    @JoinColumn(name = "client_id", nullable = false, foreignKey = @ForeignKey(name = "fk_account_client"))
     private Client client;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)

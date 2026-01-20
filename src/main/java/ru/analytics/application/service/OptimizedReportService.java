@@ -6,12 +6,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.analytics.application.dto.AccountReport;
 import ru.analytics.application.dto.ClientReportDTO;
 import ru.analytics.domain.model.Account;
 import ru.analytics.domain.model.Client;
+import ru.analytics.domain.model.Transaction;
 import ru.analytics.domain.repository.ClientRepository;
 import ru.analytics.domain.repository.TransactionRepository;
 
@@ -245,17 +248,31 @@ public class OptimizedReportService {
      * Вспомогательный метод для преобразования Client в ClientReportDTO
      */
     private ClientReportDTO convertToClientReportDTO(Client client) {
-        BigDecimal totalBalance = client.getAccounts().stream()
+        List<Account> accounts = new ArrayList<>(client.getAccounts());
+
+        // Вычисляем балансы на уровне сущностей Account
+        BigDecimal totalBalance = accounts.stream()
                 .map(Account::getBalance)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal avgBalance = client.getAccounts().isEmpty()
-                ? BigDecimal.ZERO
+        BigDecimal averageBalance = accounts.isEmpty()
+                ? null
                 : totalBalance.divide(
-                BigDecimal.valueOf(client.getAccounts().size()),
-                2, RoundingMode.HALF_UP
+                BigDecimal.valueOf(accounts.size()),
+                2,
+                RoundingMode.HALF_UP
         );
+
+        List<AccountReport> accountReports = client.getAccounts().stream()
+                .map(this::convertToAccountReport)
+                .collect(Collectors.toList());
+
+        LocalDateTime lastTxDate = client.getAccounts().stream()
+                .flatMap(acc -> acc.getTransactions().stream())
+                .map(Transaction::getCreatedAt)
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
 
         return ClientReportDTO.builder()
                 .clientId(client.getId())
@@ -264,16 +281,46 @@ public class OptimizedReportService {
                 .riskLevel(client.getRiskLevel())
                 .kycStatus(client.getKycStatus())
                 .dateOfBirth(client.getDateOfBirth())
-                .totalAccounts(client.getAccounts().size())
+                .totalAccounts(accountReports.size())
                 .totalBalance(totalBalance)
-                .averageAccountBalance(avgBalance)
+                .averageAccountBalance(averageBalance)
+                .lastTransactionDate(lastTxDate)
+                .accounts(accountReports) // ← Теперь заполняется!
                 .segments(client.getSegments().stream()
-                        .map(segment -> new ClientReportDTO.SegmentDTO(
-                                segment.getId(),
-                                segment.getName(),
-                                segment.getCode()
-                        ))
+                        .map(seg -> ClientReportDTO.SegmentDTO.builder()
+                                .id(seg.getId())
+                                .name(seg.getName())
+                                .code(seg.getCode())
+                                .build())
                         .collect(Collectors.toList()))
+                .build();
+    }
+
+    private AccountReport convertToAccountReport(Account account) {
+        List<AccountReport.TransactionSummary> recentTxs = account.getTransactions().stream()
+                .sorted((t1, t2) -> t2.getCreatedAt().compareTo(t1.getCreatedAt()))
+                .limit(5)
+                .map(tx -> AccountReport.TransactionSummary.builder()
+                        .date(tx.getCreatedAt())
+                        .amount(tx.getAmount())
+                        .type(tx.getType() != null ? tx.getType().name() : null)
+                        .description(tx.getDescription())
+                        .counterpartyName(tx.getCounterpartyName())
+                        .suspicious(tx.isSuspicious())
+                        .build())
+                .collect(Collectors.toList());
+
+        return AccountReport.builder()
+                .accountId(account.getId())
+                .accountNumber(account.getAccountNumber())
+                .accountType(account.getType() != null ? account.getType().name() : null)
+                .currencyCode(account.getCurrencyCode())
+                .balance(account.getBalance())
+                .creditLimit(account.getCreditLimit())
+                .isActive(account.isActive())
+                .createdAt(account.getCreatedAt())
+                .monthlyTransactionCount(account.getTransactions().size())
+                .recentTransactions(recentTxs)
                 .build();
     }
 
@@ -293,7 +340,7 @@ public class OptimizedReportService {
         // 2. Оптимизированный подход (хорошо)
         start = System.currentTimeMillis();
         Page<ClientReportDTO> optimizedResult = getClientsWithTransactionsOptimized(
-                org.springframework.data.domain.PageRequest.of(0, 50)
+                PageRequest.of(0, 50)
         );
         long optimizedTime = System.currentTimeMillis() - start;
 

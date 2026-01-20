@@ -1,92 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "fintech-analytics.fullname" . }}
-  namespace: {{ .Release.Namespace | default "fintech" }}
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "fintech-analytics.labels" . | nindent 4 }}
+    app: {{ .Chart.Name }}
 spec:
   replicas: {{ .Values.app.replicaCount }}
-  revisionHistoryLimit: {{ .Values.app.revisionHistoryLimit }}
   selector:
     matchLabels:
-      {{- include "fintech-analytics.selectorLabels" . | nindent 6 }}
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: {{ if gt .Values.app.replicaCount 1 }}1{{ else }}0{{ end }}
+      app: {{ .Chart.Name }}
   template:
     metadata:
       labels:
-        {{- include "fintech-analytics.selectorLabels" . | nindent 8 }}
+        app: {{ .Chart.Name }}
       annotations:
-        {{- with .Values.app.podAnnotations }}
-          {{- toYaml . | nindent 8 }}
-          {{- end }}
-          checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8080"
     spec:
-      serviceAccountName: {{ include "fintech-analytics.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.app.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
           imagePullPolicy: {{ .Values.app.image.pullPolicy }}
-          securityContext:
-            {{- toYaml .Values.app.securityContext | nindent 10 }}
           ports:
-            - name: http
-              containerPort: {{ .Values.app.service.port }}
-              protocol: TCP
+            - name: http-metrics
+              containerPort: 8080
           env:
-            {{- include "fintech-analytics.envVars" . | nindent 10 }}
-          {{- if .Values.externalServices.auditService.enabled }}
-          - name: AUDIT_SERVICE_URL
-            value: {{ .Values.externalServices.auditService.url | quote }}
-          {{- end }}
-          {{- if .Values.externalServices.notificationService.enabled }}
-          - name: NOTIFICATION_SERVICE_URL
-            value: {{ .Values.externalServices.notificationService.url | quote }}
-          {{- end }}
-          {{- if .Values.externalServices.fraudDetectionService.enabled }}
-          - name: FRAUD_DETECTION_SERVICE_URL
-            value: {{ .Values.externalServices.fraudDetectionService.url | quote }}
-          {{- end }}
-          resources:
-            {{- toYaml .Values.app.resources | nindent 10 }}
-          volumeMounts:
-            - name: config-volume
-              mountPath: /app/config
-            - name: logs
-              mountPath: /app/logs
-          {{- with .Values.app.livenessProbe }}
-          livenessProbe:
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
-          {{- with .Values.app.readinessProbe }}
-          readinessProbe:
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
-          {{- with .Values.app.startupProbe }}
-          startupProbe:
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
-      volumes:
-        - name: config-volume
-          configMap:
-            name: {{ include "fintech-analytics.fullname" . }}-config
-      - name: logs
-      emptyDir: {}
-      {{- with .Values.app.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.app.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.app.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: "health,metrics,prometheus"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/{{ .Values.postgresql.auth.database }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "{{ .Values.postgresql.auth.username }}"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "{{ .Values.postgresql.auth.password }}"
+            - name: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
+              value: "analytics"

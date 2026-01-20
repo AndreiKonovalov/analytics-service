@@ -67,6 +67,7 @@ public class AccountService {
             Transaction transaction = Transaction.builder()
                     .account(account)
                     .amount(request.getInitialBalance())
+                    .client(client)
                     .currencyCode(request.getCurrencyCode())
                     .type(TransactionType.DEPOSIT)
                     .description("Initial deposit")
@@ -148,6 +149,8 @@ public class AccountService {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId));
 
+        account.getClient().getId();
+
         if (!account.isActive()) {
             throw new IllegalStateException("Счет заблокирован или закрыт");
         }
@@ -160,6 +163,7 @@ public class AccountService {
         Transaction transaction = Transaction.builder()
                 .account(account)
                 .amount(request.getAmount())
+                .client(account.getClient())
                 .currencyCode(account.getCurrencyCode())
                 .type(TransactionType.DEPOSIT)
                 .description(request.getDescription())
@@ -201,6 +205,7 @@ public class AccountService {
         Transaction transaction = Transaction.builder()
                 .account(account)
                 .amount(request.getAmount().negate())
+                .client(account.getClient())
                 .currencyCode(account.getCurrencyCode())
                 .type(TransactionType.WITHDRAWAL)
                 .description(request.getDescription())

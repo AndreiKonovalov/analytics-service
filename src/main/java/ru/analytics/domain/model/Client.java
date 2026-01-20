@@ -12,6 +12,9 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -32,6 +35,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+//@NamedEntityGraph(
+//        name = "Client.withFullDetails",
+//        attributeNodes = {
+//                @NamedAttributeNode("accounts"),
+//                @NamedAttributeNode("segments")
+//        },
+//        subgraphs = {
+//                @NamedSubgraph(
+//                        name = "accounts.transactions",
+//                        attributeNodes = {
+//                                @NamedAttributeNode("transactions")
+//                        }
+//                ),
+//                @NamedSubgraph(
+//                        name = "transactions.category",
+//                        attributeNodes = {
+//                                @NamedAttributeNode("category")
+//                        }
+//                )
+//        }
+//)
 @Entity
 @Table(name = "clients", indexes = {
         @Index(name = "idx_client_email", columnList = "email", unique = true),

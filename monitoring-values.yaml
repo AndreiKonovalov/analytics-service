@@ -1,0 +1,33 @@
+# Файл: monitoring-values.yaml
+prometheus:
+  enabled: true
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+
+grafana:
+  enabled: true
+  adminPassword: admin123
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+  dashboards:
+    default:
+      spring-boot-dashboard:
+        gnetId: 11378
+        revision: 1
+        datasource: Prometheus

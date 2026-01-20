@@ -24,9 +24,26 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
 
     List<Client> findByKycStatus(String kycStatus);
 
-    @EntityGraph(attributePaths = {"accounts", "segments"})
+    @EntityGraph(
+            attributePaths = {
+                    "accounts",
+                    "accounts.transactions",
+                    "accounts.transactions.category",
+                    "segments"
+            }
+    )
     @Query("SELECT c FROM Client c WHERE c.id IN :ids")
     List<Client> findAllWithDetailsEntityGraph(@Param("ids") List<Long> ids);
+
+
+//    @EntityGraph(attributePaths = {"accounts", "segments"})
+//    @Query("SELECT c FROM Client c WHERE c.id IN :ids")
+//    List<Client> findAllWithDetailsEntityGraph(@Param("ids") List<Long> ids);
+
+
+//    @EntityGraph("Client.withFullDetails")
+//    @Query("SELECT c FROM Client c WHERE c.id IN :ids")
+//    List<Client> findAllWithDetailsEntityGraph(@Param("ids") List<Long> ids);
 
     @EntityGraph(attributePaths = {"accounts"})
     @Query("SELECT c FROM Client c WHERE c.id = :id")

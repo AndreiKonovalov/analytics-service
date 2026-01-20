@@ -27,16 +27,31 @@ app:
       value: "true"
 
 database:
-  external:
-    enabled: false
-  initialization:
-    enabled: true
+  host: analytics-postgres
+  port: 5432
+  name: fintech_analytics
+  username: postgres
+  password: postgres123
+  ssl: false
+
+postgresql:
+  enabled: true
+  auth:
+    database: fintech_analytics
+    username: postgres
+    password: postgres123
 
 monitoring:
   enabled: false
 
-logging:
-  level:
-    ru.analytics: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+metrics:
+  enabled: false
+
+grafana:
+  enabled: false
+
+serviceAccount:
+  create: true
+
+namespace:
+  create: false

@@ -8,23 +8,14 @@ app:
   replicaCount: 1  # Одна реплика для экономии ресурсов
   image:
     repository: fintech/analytics-service
-    tag: windows-latest
+    tag: latest
     pullPolicy: IfNotPresent
   service:
     type: NodePort  # NodePort для доступа с хоста
     port: 8080
     nodePort: 30080  # Фиксированный порт
   ingress:
-    enabled: true
-    className: nginx
-    annotations:
-      nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    hosts:
-      - host: analytics.local
-        paths:
-          - path: /
-            pathType: Prefix
-    tls: []
+    enabled: false  # Отключаем для простоты
   resources:
     requests:
       memory: "512Mi"
@@ -48,57 +39,46 @@ app:
     - name: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
       value: "always"
 
+# Database configuration - исправлено для standalone
 database:
-  enabled: true  # Включаем встроенную базу данных
   type: postgresql
-  host: postgresql
+  host: analytics-postgres  # <-- Имя сервиса из postgresql.yaml
   port: 5432
   name: fintech_analytics
   username: postgres
   password: postgres123
-  persistence:
-    enabled: true
-    size: 5Gi
+  ssl: false
 
+# Встроенный PostgreSQL (уберите внешние зависимости)
 postgresql:
   enabled: true
   image:
-    tag: 16-alpine
+    tag: 15-alpine
   auth:
     database: fintech_analytics
     username: postgres
     password: postgres123
-  primary:
-    persistence:
-      enabled: true
-      size: 5Gi
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "100m"
+  persistence:
+    enabled: false  # Для разработки
+    size: 1Gi
 
 redis:
   enabled: false  # Отключаем для экономии ресурсов
 
 monitoring:
-  enabled: true
-  prometheus:
-    enabled: true
-  grafana:
-    enabled: true
+  enabled: false  # Отключаем мониторинг для простоты
 
-# UI Dashboard для обучения
-dashboard:
-  enabled: true
-  image:
-    repository: kubernetesui/dashboard
-    tag: v2.7.0
-  service:
-    type: NodePort
-    nodePort: 30081
-  ingress:
-    enabled: true
-    hosts:
-      - host: dashboard.local
-    annotations:
-      nginx.ingress.kubernetes.io/ssl-redirect: "false"
+metrics:
+  enabled: false
+
+grafana:
+  enabled: false
+
+# ServiceAccount для standalone
+serviceAccount:
+  create: true
+  name: ""
+
+# Namespace для standalone
+namespace:
+  create: false  # Будем создавать через kubectl
