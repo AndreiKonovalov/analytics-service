@@ -1,0 +1,66 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "title": "PostgreSQL Overview",
+  "tags": ["postgres", "database"],
+  "timezone": "browser",
+  "schemaVersion": 37,
+  "version": 1,
+  "refresh": "30s",
+
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus"
+      },
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": "$datasource",
+        "query": "label_values(pg_up, instance)",
+        "refresh": 1
+      }
+    ]
+  },
+
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Postgres Up",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "pg_up{instance=\"$instance\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Connections",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "pg_stat_activity_count{instance=\"$instance\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "x": 6, "y": 0, "w": 18, "h": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Transactions per second",
+      "datasource": "$datasource",
+      "targets": [
+        {
+          "expr": "rate(pg_stat_database_xact_commit[1m])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 }
+    }
+  ]
+}

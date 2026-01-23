@@ -17,7 +17,7 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm repo update
 
 # Установка с отключением проблемных компонентов
-helm install monitoring prometheus-community/kube-prometheus-stack `
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack `
     -n monitoring `
     --set grafana.adminPassword=admin123 `
     --set grafana.sidecar.dashboards.enabled=true `
@@ -25,12 +25,12 @@ helm install monitoring prometheus-community/kube-prometheus-stack `
     --set grafana.sidecar.dashboards.folder=/var/lib/grafana/dashboards/default `
     --set grafana.sidecar.datasources.enabled=true `
     --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false `
-    --set prometheus-node-exporter.enabled=false `
+    --set nodeExporter.enabled=false `
     --set kube-state-metrics.enabled=false
 
 # Дадим время на установку, но не ждём завершения всех компонентов
-Write-Host "   Waiting 45 seconds for monitoring components..." -ForegroundColor Gray
-Start-Sleep -Seconds 45
+Write-Host "   Waiting 25 seconds for monitoring components..." -ForegroundColor Gray
+Start-Sleep -Seconds 25
 
 # Проверяем что установилось
 Write-Host "   Checking monitoring status..." -ForegroundColor Gray
@@ -49,7 +49,7 @@ helm upgrade --install analytics ./helm `
     --set postgresql.enabled=true `
     --set monitoring.enabled=true `
     --wait `
-    --timeout 3m
+    --timeout 2m
 
 # 6. Проверка с правильными именами сервисов
 Write-Host "6. Verifying deployment..." -ForegroundColor Yellow

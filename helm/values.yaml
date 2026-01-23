@@ -104,27 +104,12 @@ serviceAccount:
   annotations: {}
 
 # Database configuration
-postgresql:
-  enabled: true
-  image: "postgres:15-alpine"  # Добавьте это
-  auth:  # Добавьте эту секцию
-    database: "fintech_analytics"
-    username: "postgres"
-    password: "postgres123"
-  # Для продакшена используйте externalSecret
-  # externalSecret:
-  #   name: database-credentials
-  #   key: password
-  ssl: false
-  maxConnections: 20
-  connectionTimeout: 30000
-  initialization:
-    enabled: true
-    scripts:
-      - name: init-schema.sql
-        content: |
-          CREATE SCHEMA IF NOT EXISTS analytics;
-          GRANT ALL PRIVILEGES ON SCHEMA analytics TO postgres;
+database:
+  image: "postgres:15-alpine"
+  port: 5432
+  name: fintech_analytics
+  username: postgres
+  password: postgres123
 
 # Monitoring configuration
 monitoring:
@@ -158,34 +143,12 @@ logging:
     maxBackups: 10
     maxAge: 30
 
-# Cache configuration
-redis:
-  type: redis
-  enabled: false
-  host: redis
-  port: 6379
-  password: ""
-  database: 0
-  timeout: 10000
-
 # Feature flags
 features:
   nPlusOneDetection: true
   queryMetrics: true
   slowQueryLogging: true
   transactionTracing: true
-
-# External services
-externalServices:
-  auditService:
-    url: http://audit-service:8080
-    enabled: false
-  notificationService:
-    url: http://notification-service:8080
-    enabled: false
-  fraudDetectionService:
-    url: http://fraud-detection-service:8080
-    enabled: false
 
 metrics:
   enabled: true
@@ -221,4 +184,3 @@ grafana:
 
 prometheus-node-exporter:
   enabled: false
-
