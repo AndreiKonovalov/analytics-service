@@ -86,10 +86,6 @@ app:
   nodeSelector: {}
   tolerations: []
   affinity: {}
-  podAnnotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/path: "/actuator/prometheus"
-    prometheus.io/port: "8080"
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: "kubernetes"
@@ -198,6 +194,12 @@ metrics:
   scrapeTimeout: 10s
 
 grafana:
+  additionalDataSources:
+    - name: Prometheus
+      type: prometheus
+      url: http://monitoring-kube-prometheus-prometheus.monitoring.svc:9090
+      access: proxy
+      isDefault: true
   enabled: true
   adminPassword: admin123
   sidecar:
@@ -216,9 +218,7 @@ grafana:
           editable: true
           options:
             path: /var/lib/grafana/dashboards/default
-  dashboards:
-    default:
-      spring-boot-dashboard:
-        gnetId: 11378  # <-- ТОТ САМЫЙ Spring Boot дашборд
-        revision: 1
-        datasource: Prometheus
+
+prometheus-node-exporter:
+  enabled: false
+

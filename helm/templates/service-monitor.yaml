@@ -5,7 +5,7 @@ metadata:
   name: {{ .Release.Name }}-analytics
   namespace: {{ .Values.monitoring.namespace | default "monitoring" }}
   labels:
-    release: {{ .Release.Name }}
+    release: monitoring
     heritage: {{ .Release.Service }}
 spec:
   selector:

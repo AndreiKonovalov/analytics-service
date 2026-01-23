@@ -20,6 +20,10 @@ helm repo update
 helm install monitoring prometheus-community/kube-prometheus-stack `
     -n monitoring `
     --set grafana.adminPassword=admin123 `
+    --set grafana.sidecar.dashboards.enabled=true `
+    --set grafana.sidecar.dashboards.label=grafana_dashboard `
+    --set grafana.sidecar.dashboards.folder=/var/lib/grafana/dashboards/default `
+    --set grafana.sidecar.datasources.enabled=true `
     --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false `
     --set prometheus-node-exporter.enabled=false `
     --set kube-state-metrics.enabled=false
