@@ -36,6 +36,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-cache")
 
+    // Kafka
+    implementation("org.springframework.kafka:spring-kafka")
+
     // Кэш
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
@@ -53,7 +56,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-    implementation("org.apache.commons:commons-lang3:3.17.0")
+    implementation("org.apache.commons:commons-lang3:3.18.0")
     implementation("com.google.guava:guava:33.4.0-jre")
     implementation("org.hibernate:hibernate-jpamodelgen:6.5.2.Final")
     implementation("com.fasterxml.jackson.core:jackson-databind")

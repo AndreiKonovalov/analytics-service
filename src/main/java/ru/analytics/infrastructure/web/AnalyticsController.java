@@ -16,7 +16,6 @@ import ru.analytics.application.service.OptimizedReportService;
 import ru.analytics.application.service.TransactionReportService;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/analytics")
@@ -41,13 +40,6 @@ public class AnalyticsController {
     public ResponseEntity<List<ClientReportDTO>> getClientsNaive() {
         log.info("Получение клиентов с наивным подходом");
         return ResponseEntity.ok(transactionReportService.getClientsWithTransactionsNaive());
-    }
-
-    @Operation(summary = "Сводный отчет по клиентам (map-проекция)")
-    @GetMapping("/clients/summary")
-    public ResponseEntity<List<Map<String, Object>>> getClientsSummary() {
-        log.info("Получение сводного отчета по клиентам");
-        return ResponseEntity.ok(optimizedReportService.getClientSummaryProjection());
     }
 
     @Operation(summary = "Демонстрация N+1 проблемы")

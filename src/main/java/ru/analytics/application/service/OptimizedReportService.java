@@ -20,9 +20,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -76,44 +74,6 @@ public class OptimizedReportService {
                 duration, dtos.size());
 
         return new PageImpl<>(dtos, pageable, total);
-    }
-
-    /**
-     * ХОРОШО: Решение 2 - DTO проекции на уровне JPQL
-     * Загружаем только необходимые поля через map-проекцию.
-     */
-    @Transactional(readOnly = true)
-    @SuppressWarnings("unchecked")
-    public List<Map<String, Object>> getClientSummaryProjection() {
-        LocalDateTime startDate = LocalDateTime.now().minusMonths(1);
-        LocalDateTime endDate = LocalDateTime.now();
-
-        List<Map> results = em.createQuery("""
-                SELECT new map(
-                    c.id as clientId,
-                    c.firstName as firstName,
-                    c.lastName as lastName,
-                    COUNT(a) as accountCount,
-                    SUM(a.balance) as totalBalance,
-                    COUNT(t) as transactionCount
-                )
-                FROM Client c
-                LEFT JOIN c.accounts a
-                LEFT JOIN a.transactions t ON t.createdAt BETWEEN :startDate AND :endDate
-                GROUP BY c.id, c.firstName, c.lastName
-                HAVING COUNT(t) > 0
-                ORDER BY totalBalance DESC
-                """, Map.class)
-                .setParameter("startDate", startDate)
-                .setParameter("endDate", endDate)
-                .setMaxResults(100)
-                .getResultList();
-
-        List<Map<String, Object>> typedResults = new ArrayList<>();
-        for (Map map : results) {
-            typedResults.add(new HashMap<>(map));
-        }
-        return typedResults;
     }
 
 

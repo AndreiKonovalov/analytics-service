@@ -36,6 +36,18 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
+  kafka:
+    bootstrap-servers: fintech-kafka-kafka-bootstrap:9092
+    producer:
+      properties:
+        spring.json.add.type.headers: false
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
 management:
   endpoints:
     web:
