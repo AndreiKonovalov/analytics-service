@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.analytics.application.dto.AccountReport;
 import ru.analytics.application.dto.ClientReportDTO;
 import ru.analytics.domain.model.Account;
-import ru.analytics.domain.model.Client;
 import ru.analytics.domain.model.Transaction;
 import ru.analytics.domain.repository.ClientRepository;
 
@@ -17,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Пример НЕОПТИМИЗИРОВАННОГО сервиса с проблемой N+1
@@ -159,24 +157,4 @@ public class TransactionReportService {
         return result;
     }
 
-    /**
-     * ПЛОХО: Еще один пример проблемы N+1
-     * JOIN FETCH без DISTINCT приводит к дублированию данных
-     */
-    @Transactional(readOnly = true)
-    public List<Client> getClientsWithDetailsBad() {
-        // Проблема: JOIN FETCH без пагинации на больших данных
-        return clientRepository.findVerifiedClientsWithDetails();
-    }
-
-    /**
-     * ПЛОХО: Использование EAGER fetching в сущностях
-     * Приводит к избыточной загрузке данных
-     */
-    @Transactional(readOnly = true)
-    public List<Client> getClientsWithEagerLoading() {
-        // Если в сущности Client указано fetch = FetchType.EAGER для accounts,
-        // то при загрузке клиентов всегда будут загружаться все аккаунты
-        return clientRepository.findAll();
-    }
 }

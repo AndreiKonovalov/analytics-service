@@ -1,12 +1,8 @@
 package ru.analytics.application.service;
 
-import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -23,7 +19,6 @@ import ru.analytics.exception.InsufficientFundsException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -61,79 +56,6 @@ public class TransactionProcessingService {
         return executeTransfer(fromAccount, toAccount, request);
     }
 
-    /**
-     * Пример 2: Транзакция с оптимистической блокировкой
-     * Используется для менее критичных операций с ретраями
-     */
-    @Retryable(
-            retryFor = {OptimisticLockException.class, ObjectOptimisticLockingFailureException.class},
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 100, multiplier = 2)
-    )
-    @Transactional(
-            isolation = Isolation.READ_COMMITTED,
-            propagation = Propagation.REQUIRED
-    )
-    public TransferResult processTransferWithOptimisticLock(TransferRequest request) {
-        log.info("Processing transfer with optimistic lock: {}", request);
-
-        Account fromAccount = accountRepository.findById(request.fromAccountId())
-                .orElseThrow(() -> new AccountNotFoundException(request.fromAccountId()));
-
-        Account toAccount = accountRepository.findById(request.toAccountId())
-                .orElseThrow(() -> new AccountNotFoundException(request.toAccountId()));
-
-        return executeTransfer(fromAccount, toAccount, request);
-    }
-
-    /**
-     * Пример 3: READ COMMITTED для отчетов
-     * Позволяет читать закоммиченные данные
-     */
-    @Transactional(
-            isolation = Isolation.READ_COMMITTED,
-            readOnly = true,
-            propagation = Propagation.SUPPORTS
-    )
-    public BigDecimal getAccountBalance(Long accountId) {
-        return accountRepository.findById(accountId)
-                .map(Account::getBalance)
-                .orElse(BigDecimal.ZERO);
-    }
-
-    /**
-     * Пример 4: SERIALIZABLE для сверхкритичных операций
-     * Полная изоляция, но медленнее
-     */
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public TransferResult processHighValueTransfer(TransferRequest request) {
-        if (request.amount().compareTo(new BigDecimal("100000")) > 0) {
-            log.warn("High value transfer detected: {}", request.amount());
-            // Дополнительные проверки для крупных переводов
-        }
-
-        return processTransferWithPessimisticLock(request);
-    }
-
-    /**
-     * Пример 5: Пакетная обработка с транзакциями
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public int processBatchTransfers(List<TransferRequest> requests) {
-        int successCount = 0;
-
-        for (TransferRequest request : requests) {
-            try {
-                processTransferWithOptimisticLock(request);
-                successCount++;
-            } catch (Exception e) {
-                log.error("Failed to process transfer: {}", request, e);
-                // Продолжаем обработку остальных
-            }
-        }
-
-        return successCount;
-    }
 
     /**
      * Вспомогательный метод для выполнения перевода
@@ -232,14 +154,6 @@ public class TransactionProcessingService {
                 .createdAt(LocalDateTime.now())
                 .executedAt(LocalDateTime.now())
                 .build();
-    }
-
-    /**
-     * Пример 6: Управление транзакциями вручную
-     * Для сложных сценариев
-     */
-    public TransferResult processTransferManually(TransferRequest request) {
-        return processTransferWithPessimisticLock(request);
     }
 
     /**
