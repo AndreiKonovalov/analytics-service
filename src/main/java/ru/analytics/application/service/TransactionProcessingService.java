@@ -45,15 +45,26 @@ public class TransactionProcessingService {
     )
     public TransferResult processTransferWithPessimisticLock(TransferRequest request) {
         log.info("Processing transfer with pessimistic lock: {}", request);
+        try {
 
-        // Используем пессимистическую блокировку для предотвращения race conditions
-        Account fromAccount = accountRepository.findByIdWithLock(request.fromAccountId())
-                .orElseThrow(() -> new AccountNotFoundException(request.fromAccountId().toString()));
+            // Используем пессимистическую блокировку для предотвращения race conditions
+            Account fromAccount = accountRepository.findByIdWithLock(request.fromAccountId())
+                    .orElseThrow(() -> new AccountNotFoundException(request.fromAccountId().toString()));
 
-        Account toAccount = accountRepository.findByIdWithLock(request.toAccountId())
-                .orElseThrow(() -> new AccountNotFoundException(request.toAccountId().toString()));
+            Account toAccount = accountRepository.findByIdWithLock(request.toAccountId())
+                    .orElseThrow(() -> new AccountNotFoundException(request.toAccountId().toString()));
 
-        return executeTransfer(fromAccount, toAccount, request);
+            return executeTransfer(fromAccount, toAccount, request);
+        } catch (RuntimeException ex) {
+            eventPublisher.publishEvent(
+                    TransferCompletedEvent.failure(
+                            request,
+                            ex.getMessage()
+                    )
+            );
+            throw ex;
+
+        }
     }
 
 
@@ -112,8 +123,10 @@ public class TransactionProcessingService {
         transactionRepository.save(creditTransaction);
 
         // Публикация события
-        eventPublisher.publishEvent(new TransferCompletedEvent(
-                this, request, externalReference, LocalDateTime.now()
+        eventPublisher.publishEvent(TransferCompletedEvent.success(
+                request,
+                externalReference,
+                LocalDateTime.now()
         ));
 
         log.info("Transfer completed successfully: {}", externalReference);

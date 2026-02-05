@@ -2,12 +2,14 @@ package ru.analytics.application.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.analytics.application.dto.ClientDetailsDTO;
 import ru.analytics.application.dto.ClientResponseDTO;
+import ru.analytics.application.event.ClientRegisteredEvent;
 import ru.analytics.domain.model.Client;
 import ru.analytics.domain.repository.ClientRepository;
 import ru.analytics.exception.ClientNotFoundException;
@@ -25,6 +27,7 @@ public class ClientService {
 
     private final ClientRepository clientRepository;
     private final ClientMapper clientMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ClientResponseDTO createClient(ClientCreateRequest request) {
@@ -48,6 +51,13 @@ public class ClientService {
                 .build();
 
         client = clientRepository.save(client);
+
+        eventPublisher.publishEvent(
+                ClientRegisteredEvent.of(
+                        client.getId(),
+                        client.getEmail(),
+                        client.getFirstName() + " " + client.getLastName()
+                ));
         return clientMapper.toResponseDTO(client);
     }
 
