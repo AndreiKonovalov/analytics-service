@@ -137,6 +137,7 @@ spring:
 #### Аналитика
 - `GET /api/v1/analytics/clients/optimized` - Оптимизированный запрос клиентов
 - `GET /api/v1/analytics/clients/naive` - Наивный запрос (для сравнения)
+- `GET /api/v1/analytics/clients/summary` - Сводный отчет по клиентам (проекция)
 - `GET /api/v1/analytics/demo/n-plus-one` - Демонстрация N+1 проблемы
 
 #### Транзакции
