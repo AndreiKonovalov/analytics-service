@@ -27,6 +27,7 @@ import ru.analytics.application.service.ClientService;
 import ru.analytics.infrastructure.web.dto.ClientCreateRequest;
 import ru.analytics.infrastructure.web.dto.ClientUpdateRequest;
 
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/clients")
@@ -99,4 +100,5 @@ public class ClientController {
         log.info("Получение клиентов с деталями");
         return ResponseEntity.ok(clientService.getClientsWithDetails());
     }
+
 }

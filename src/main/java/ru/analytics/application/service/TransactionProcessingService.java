@@ -184,4 +184,5 @@ public class TransactionProcessingService {
         log.info("- Финансовые операции: REPEATABLE READ с блокировками");
         log.info("- Критичные операции: SERIALIZABLE");
     }
+
 }

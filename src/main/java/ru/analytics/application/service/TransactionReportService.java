@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.analytics.application.dto.AccountReport;
 import ru.analytics.application.dto.ClientReportDTO;
 import ru.analytics.domain.model.Account;
+import ru.analytics.domain.model.Client;
 import ru.analytics.domain.model.Transaction;
 import ru.analytics.domain.repository.ClientRepository;
 
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Пример НЕОПТИМИЗИРОВАННОГО сервиса с проблемой N+1

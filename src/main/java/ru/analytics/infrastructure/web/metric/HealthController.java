@@ -1,4 +1,4 @@
-package ru.analytics.infrastructure.web;
+package ru.analytics.infrastructure.web.metric;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

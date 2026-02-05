@@ -7,7 +7,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import ru.analytics.application.event.ClientRegisteredEvent;
 import ru.analytics.messaging.kafka.producer.KafkaProducer;
 
-
 @Component
 @RequiredArgsConstructor
 public class ClientRegisteredEventListener {

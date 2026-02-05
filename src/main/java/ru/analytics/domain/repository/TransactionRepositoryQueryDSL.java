@@ -197,4 +197,5 @@ public class TransactionRepositoryQueryDSL {
                 .limit(10)
                 .fetch();
     }
+
 }
