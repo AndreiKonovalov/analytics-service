@@ -124,30 +124,6 @@ public class ClientService {
     }
 
     @Transactional(readOnly = true)
-    public ClientResponseDTO getClientByEmail(String email) {
-        log.debug("Получение клиента по email: {}", email);
-        Client client = clientRepository.findByEmail(email)
-                .orElseThrow(() -> new ClientNotFoundException("Клиент с email " + email + " не найден"));
-        return clientMapper.toResponseDTO(client);
-    }
-
-    @Transactional(readOnly = true)
-    public List<ClientResponseDTO> getClientsByRiskLevel(String riskLevel) {
-        log.debug("Получение клиентов по уровню риска: {}", riskLevel);
-        return clientMapper.toResponseDTOList(
-                clientRepository.findByRiskLevel(riskLevel)
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public List<ClientResponseDTO> getVerifiedClients() {
-        log.debug("Получение верифицированных клиентов");
-        return clientMapper.toResponseDTOList(
-                clientRepository.findByKycStatus("VERIFIED")
-        );
-    }
-
-    @Transactional(readOnly = true)
     public List<ClientDetailsDTO> getClientsWithDetails() {
         log.debug("Получение клиентов с деталями (оптимизированный запрос)");
 
