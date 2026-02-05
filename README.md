@@ -144,12 +144,21 @@ spring:
 - `GET /api/v1/transactions/demo/isolation-levels` - Демонстрация уровней изоляции
 
 #### Клиенты
+- `POST /api/v1/clients` - Создать клиента
 - `GET /api/v1/clients` - Все клиенты с пагинацией
+- `GET /api/v1/clients/{id}` - Клиент по ID
+- `PUT /api/v1/clients/{id}` - Полное обновление клиента
+- `PATCH /api/v1/clients/{id}` - Частичное обновление клиента
+- `DELETE /api/v1/clients/{id}` - Удалить клиента
 - `GET /api/v1/clients/with-details` - Клиенты с деталями (EntityGraph)
 
 #### Счета
+- `POST /api/v1/accounts` - Создать счет
 - `GET /api/v1/accounts` - Все счета
-- `GET /api/v1/accounts/{id}/with-details` - Счет с деталями
+- `GET /api/v1/accounts/{id}` - Счет по ID
+- `PUT /api/v1/accounts/{id}` - Полное обновление счета
+- `PATCH /api/v1/accounts/{id}` - Частичное обновление счета
+- `DELETE /api/v1/accounts/{id}` - Удалить счет
 
 ### Примеры запросов
 
@@ -167,9 +176,9 @@ curl -X POST "http://localhost:8080/api/v1/transactions/transfer" \
   }'
 ```
 
-#### Получение аналитики по категориям:
+#### Получение оптимизированной аналитики по клиентам:
 ```bash
-curl -X GET "http://localhost:8080/api/v1/analytics/spending/category-analysis?from=2024-01-01T00:00:00&to=2024-12-31T23:59:59"
+curl -X GET "http://localhost:8080/api/v1/analytics/clients/optimized?page=0&size=20"
 ```
 
 ## 🧪 Тестирование

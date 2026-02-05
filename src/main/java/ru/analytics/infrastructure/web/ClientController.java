@@ -27,7 +27,6 @@ import ru.analytics.application.service.ClientService;
 import ru.analytics.infrastructure.web.dto.ClientCreateRequest;
 import ru.analytics.infrastructure.web.dto.ClientUpdateRequest;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/clients")
@@ -92,27 +91,6 @@ public class ClientController {
     public ResponseEntity<ClientResponseDTO> getClientById(@PathVariable Long id) {
         log.info("Получение клиента по ID: {}", id);
         return ResponseEntity.ok(clientService.getClientById(id));
-    }
-
-    @Operation(summary = "Получить клиента по email")
-    @GetMapping("/email/{email}")
-    public ResponseEntity<ClientResponseDTO> getClientByEmail(@PathVariable String email) {
-        log.info("Получение клиента по email: {}", email);
-        return ResponseEntity.ok(clientService.getClientByEmail(email));
-    }
-
-    @Operation(summary = "Получить клиентов по уровню риска")
-    @GetMapping("/risk-level/{riskLevel}")
-    public ResponseEntity<List<ClientResponseDTO>> getClientsByRiskLevel(@PathVariable String riskLevel) {
-        log.info("Получение клиентов по уровню риска: {}", riskLevel);
-        return ResponseEntity.ok(clientService.getClientsByRiskLevel(riskLevel));
-    }
-
-    @Operation(summary = "Получить верифицированных клиентов")
-    @GetMapping("/verified")
-    public ResponseEntity<List<ClientResponseDTO>> getVerifiedClients() {
-        log.info("Получение верифицированных клиентов");
-        return ResponseEntity.ok(clientService.getVerifiedClients());
     }
 
     @Operation(summary = "Получить клиентов с деталями (для демонстрации оптимизации)")
