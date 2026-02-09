@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +46,9 @@ public class OptimizedReportService {
      * Пагинация предотвращает загрузку всех данных сразу
      */
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "analytics.clients.optimized", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort.toString()")
     public Page<ClientReportDTO> getClientsWithTransactionsOptimized(Pageable pageable) {
+        log.info("Cache miss for optimized clients report: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
         long startTime = System.currentTimeMillis();
 
         // Используем нативный запрос для получения ID клиентов с пагинацией
@@ -80,7 +83,9 @@ public class OptimizedReportService {
 
     @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
+    @Cacheable(cacheNames = "analytics.clients.summary")
     public List<Map<String, Object>> getClientSummaryProjection() {
+        log.info("Cache miss for client summary projection");
         LocalDateTime startDate = LocalDateTime.now().minusMonths(1);
         LocalDateTime endDate = LocalDateTime.now();
 

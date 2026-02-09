@@ -4,7 +4,7 @@ set -euo pipefail
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 REQUESTS="${REQUESTS:-200}"
 CONCURRENCY="${CONCURRENCY:-20}"
-MODE="${MODE:-naive}"
+MODE="${MODE:-optimized}"
 
 case "$MODE" in
   naive)

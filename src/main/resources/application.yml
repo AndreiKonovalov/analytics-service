@@ -47,6 +47,10 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=30s
 
 management:
   endpoints:

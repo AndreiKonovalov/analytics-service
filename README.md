@@ -208,6 +208,14 @@ curl -X GET "http://localhost:8080/api/v1/analytics/clients/optimized?page=0&siz
 
 Подробная инструкция: [docs/profiling-guide.md](docs/profiling-guide.md).
 
+## 🗃️ Кэширование и Redis
+
+В проект добавлено кэширование с поддержкой Redis (и Caffeine по умолчанию для локальной разработки).
+Есть готовый сценарий для демонстрации стажёрам: прогрев кэша, проверка ключей в Redis,
+инвалидация и сравнение времени отклика.
+
+Подробная инструкция: [docs/caching-guide.md](docs/caching-guide.md).
+
 ## 🔧 Конфигурация
 
 ### Основные настройки
