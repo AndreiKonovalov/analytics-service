@@ -6,25 +6,33 @@
 
 ```bash
 # PostgreSQL + Redis + сервис
-Docker-compose up -d
+docker-compose up -d
 ```
 
 По умолчанию в docker-профиле включён Redis-кэш (`SPRING_PROFILES_ACTIVE=docker,redis`).
 
 ## 2. Наблюдение за кэшем
 
-Откройте отдельный терминал и подключитесь к Redis:
+### Вариант A (если `redis-cli` установлен локально)
 
 ```bash
 redis-cli -h localhost -p 6379
 ```
 
+### Вариант B (рекомендуется для Windows, если `redis-cli` не установлен)
+
+```bash
+docker exec -it fintech-redis redis-cli
+```
+
 Внутри Redis можно смотреть ключи:
 
-```
+```text
 KEYS analytics.*
 TTL analytics.clients.summary
 ```
+
+> Для PowerShell ошибка `redis-cli : ... CommandNotFoundException` означает, что CLI не установлен в системе. Это нормально при запуске Redis в Docker — используйте `docker exec ... redis-cli`.
 
 ## 3. Демонстрация кэширования
 
@@ -34,10 +42,22 @@ TTL analytics.clients.summary
 curl -s http://localhost:8080/api/v1/analytics/clients/summary > /dev/null
 ```
 
+PowerShell-эквивалент:
+
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8080/api/v1/analytics/clients/summary" | Out-Null
+```
+
 ### Шаг 2: Повторить запрос
 
 ```bash
 curl -s http://localhost:8080/api/v1/analytics/clients/summary > /dev/null
+```
+
+PowerShell-эквивалент:
+
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8080/api/v1/analytics/clients/summary" | Out-Null
 ```
 
 **Что увидят стажёры:**
@@ -49,6 +69,13 @@ curl -s http://localhost:8080/api/v1/analytics/clients/summary > /dev/null
 ```bash
 curl -X POST http://localhost:8080/api/v1/analytics/cache/evict
 curl -s http://localhost:8080/api/v1/analytics/clients/summary > /dev/null
+```
+
+PowerShell-эквивалент:
+
+```powershell
+Invoke-WebRequest -Method Post -Uri "http://localhost:8080/api/v1/analytics/cache/evict" | Out-Null
+Invoke-WebRequest -Uri "http://localhost:8080/api/v1/analytics/clients/summary" | Out-Null
 ```
 
 ### Дополнительно: сравнить с пагинацией
