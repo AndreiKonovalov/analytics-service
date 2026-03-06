@@ -1,0 +1,73 @@
+databaseChangeLog:
+  - changeSet:
+      id: 012-add-client-id-to-transactions
+      author: fintech-team
+      changes:
+        # 1. Добавляем колонку client_id (пока nullable, заполним позже)
+        - addColumn:
+            tableName: transactions
+            columns:
+              - column:
+                  name: client_id
+                  type: bigint
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_transaction_client
+                    references: clients(id)
+                    deleteCascade: true
+
+        # 2. Обновляем существующие транзакции, устанавливая client_id из accounts
+        - sql:
+            sql: |
+              UPDATE transactions t
+              SET client_id = a.client_id
+              FROM accounts a
+              WHERE t.account_id = a.id
+                AND t.client_id IS NULL;
+
+        # 3. Делаем колонку NOT NULL после заполнения
+        - addNotNullConstraint:
+            tableName: transactions
+            columnName: client_id
+            columnDataType: bigint
+
+        # 4. Добавляем индекс для оптимизации запросов по клиенту
+        - createIndex:
+            tableName: transactions
+            indexName: idx_transaction_client_created
+            columns:
+              - column:
+                  name: client_id
+              - column:
+                  name: created_at
+
+        # 5. Добавляем еще один индекс для часто используемых запросов
+        - createIndex:
+            tableName: transactions
+            indexName: idx_transaction_client_account
+            columns:
+              - column:
+                  name: client_id
+              - column:
+                  name: account_id
+
+        # 6. Обновляем индекс idx_transaction_account_created, чтобы включить client_id
+        # (сначала удаляем старый, потом создаем новый)
+        - dropIndex:
+            tableName: transactions
+            indexName: idx_transaction_account_created
+          preConditions:
+            - indexExists:
+                tableName: transactions
+                indexName: idx_transaction_account_created
+
+        - createIndex:
+            tableName: transactions
+            indexName: idx_transaction_account_client_created
+            columns:
+              - column:
+                  name: account_id
+              - column:
+                  name: client_id
+              - column:
+                  name: created_at

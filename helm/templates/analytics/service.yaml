@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-analytics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: fintech-analytics
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.app.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.app.service.port }}
+      targetPort: {{ .Values.app.service.targetPort }}
+  selector:
+    app: fintech-analytics
+    release: {{ .Release.Name }}

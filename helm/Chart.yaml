@@ -1,0 +1,6 @@
+﻿apiVersion: v2
+name: fintech-analytics
+description: FinTech Analytics Service for transaction analysis
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

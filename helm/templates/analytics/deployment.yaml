@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-analytics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: fintech-analytics
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  selector:
+    matchLabels:
+      app: fintech-analytics
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: fintech-analytics
+        release: {{ .Release.Name }}
+      annotations:
+        {{- toYaml .Values.app.podAnnotations | nindent 8 }}
+    spec:
+      containers:
+        - name: wait-for-postgres
+          image: busybox:1.35
+          command:
+            - sh
+            - -c
+            - |
+              until PGPASSWORD=postgres123 psql \
+                -h {{ .Release.Name }}-postgres \
+                -U postgres \
+                -d fintech_analytics \
+                -c "select 1" >/dev/null 2>&1; do
+                echo "waiting for postgres";
+                sleep 2;
+              done;
+        - name: fintech-analytics
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.service.port }}
+          env:
+            {{- range .Values.app.env }}
+            - name: {{ .name }}
+              {{- if .value }}
+              value: {{ .value | quote }}
+              {{- end }}
+            {{- end }}
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ .Release.Name }}-postgres:{{ .Values.database.port }}/{{ .Values.database.name }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "{{ .Values.database.username }}"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "{{ .Values.database.password }}"
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+          {{- with .Values.app.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.app.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
