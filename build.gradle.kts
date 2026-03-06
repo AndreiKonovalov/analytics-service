@@ -2,8 +2,8 @@ plugins {
     java
     id("org.springframework.boot") version "3.5.8"
     id("io.spring.dependency-management") version "1.1.7"
-    id("com.ewerk.gradle.plugins.querydsl") version "1.0.10"
     id("io.freefair.lombok") version "8.11"
+    id("org.liquibase.gradle") version "2.2.0"
 }
 
 group = "ru.analytics"
@@ -19,6 +19,9 @@ configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
     }
+    liquibaseRuntime {
+        extendsFrom(configurations.runtimeClasspath.get())
+    }
 }
 
 repositories {
@@ -31,14 +34,21 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+    // Kafka
+    implementation("org.springframework.kafka:spring-kafka")
+
+    // Кэш
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
     // База данных
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.liquibase:liquibase-core")
 
-    // QueryDSL
+    // QueryDSL - правильная конфигурация для Spring Boot 3.x
     implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
-    implementation("com.querydsl:querydsl-core:5.1.0")
     annotationProcessor("com.querydsl:querydsl-apt:5.1.0:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
@@ -47,16 +57,33 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-    implementation("org.apache.commons:commons-lang3:3.17.0")
+    implementation("org.apache.commons:commons-lang3:3.18.0")
     implementation("com.google.guava:guava:33.4.0-jre")
+    implementation("org.hibernate:hibernate-jpamodelgen:6.5.2.Final")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.core:jackson-core")
+    implementation("com.fasterxml.jackson.core:jackson-annotations")
 
-    //Мониторинг
+    //Мониторинг и метрики
     implementation("io.micrometer:micrometer-core")
     implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("io.micrometer:micrometer-tracing-bridge-brave")
+    implementation("io.zipkin.reporter2:zipkin-reporter-brave")
 
     // Retry
     implementation("org.springframework.retry:spring-retry")
     implementation("org.aspectj:aspectjweaver")
+
+    // OpenAPI/Swagger документация
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
+
+    // MapStruct
+    implementation("org.mapstruct:mapstruct:1.5.5.Final")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
+    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
+
+    // Для работы с коллекциями
+    implementation("org.mapstruct:mapstruct-processor:1.5.5.Final")
 
     // Тестирование
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -65,11 +92,37 @@ dependencies {
     testImplementation("org.awaitility:awaitility:4.2.2")
     testImplementation("org.mockito:mockito-core")
     testImplementation("com.h2database:h2")
+
+    // Зависимости для Liquibase runtime (для плагина)
+    liquibaseRuntime("org.liquibase:liquibase-core")
+    liquibaseRuntime("org.postgresql:postgresql")
+    liquibaseRuntime("info.picocli:picocli:4.7.5")
 }
 
-// QueryDSL конфигурация
-val querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
+liquibase {
+    activities {
+        create("main") {
+            this.arguments = mapOf(
+                "changelogFile" to "src/main/resources/db/changelog/db.changelog-master.yaml",
+                "url" to "jdbc:postgresql://localhost:5432/fintech_analytics",
+                "username" to "postgres",
+                "password" to "postgres",
+                "driver" to "org.postgresql.Driver",
+                "classpath" to sourceSets.main.get().runtimeClasspath.asPath
+            )
+        }
+    }
+}
 
+// QueryDSL конфигурация - более простая версия
+val querydslDir = "build/generated/querydsl"
+
+tasks.withType<JavaCompile> {
+    options.generatedSourceOutputDirectory.set(file(querydslDir))
+    options.compilerArgs.addAll(listOf("-parameters", "-Xlint:unchecked"))
+}
+
+// Добавляем сгенерированные исходники в sourceSets
 sourceSets {
     main {
         java {
@@ -78,13 +131,9 @@ sourceSets {
     }
 }
 
-tasks.withType<JavaCompile> {
-    options.generatedSourceOutputDirectory = querydslDir
-    options.compilerArgs.addAll(listOf("-parameters", "-Xlint:unchecked"))
-}
-
+// Очистка сгенерированных файлов QueryDSL
 tasks.clean {
-    doLast {
+    doFirst {
         delete(querydslDir)
     }
 }
@@ -95,4 +144,9 @@ tasks.test {
         events("passed", "skipped", "failed")
         showStandardStreams = true
     }
+}
+
+// Для Spring Boot 3.x нужно также убедиться, что annotationProcessor найдет пути
+tasks.compileJava {
+    dependsOn(tasks.processResources)
 }

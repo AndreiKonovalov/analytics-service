@@ -1,0 +1,186 @@
+# Global configuration
+global:
+  nameOverride: ""
+  fullnameOverride: ""
+  clusterDomain: cluster.local
+  environment: development
+  domain: fintech.local
+
+# Application configuration
+app:
+  name: analytics-service
+  replicaCount: 1
+  revisionHistoryLimit: 10
+  image:
+    repository: fintech/analytics-service
+    tag: latest
+    pullPolicy: IfNotPresent
+    # Для продакшена используйте digest вместо tag
+    # digest: sha256:xxxx
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    annotations: {}
+  ingress:
+    enabled: false
+    className: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+      - host: analytics.fintech.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  podSecurityContext:
+    fsGroup: 1000
+    runAsUser: 1000
+    runAsNonRoot: true
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+    allowPrivilegeEscalation: false
+  livenessProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: 8080
+    initialDelaySeconds: 90
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /actuator/health/readiness
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  startupProbe:
+    httpGet:
+      path: /actuator/health/startup
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 30
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "kubernetes"
+    - name: JAVA_OPTS
+      value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication -Djava.security.egd=file:/dev/./urandom"
+    - name: SERVER_TOMCAT_MAX_THREADS
+      value: "200"
+    - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+      value: "health,metrics,prometheus,info"
+    - name: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
+      value: "always"
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# Database configuration
+database:
+  image: "postgres:15-alpine"
+  port: 5432
+  name: fintech_analytics
+  username: postgres
+  password: postgres123
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  prometheus:
+    scrapeInterval: 30s
+    scrapeTimeout: 10s
+  grafana:
+    dashboard:
+      enabled: true
+      namespace: monitoring
+    datasource:
+      name: prometheus
+      type: prometheus
+      url: http://prometheus-server.monitoring.svc.cluster.local:9090
+
+# Logging configuration
+logging:
+  enabled: true
+  level:
+    root: INFO
+    ru.analytics: DEBUG
+    org.hibernate.SQL: WARN
+  format: json
+  output:
+    - console
+    - file
+  file:
+    path: /app/logs
+    maxSize: 10MB
+    maxBackups: 10
+    maxAge: 30
+
+# Feature flags
+features:
+  nPlusOneDetection: true
+  queryMetrics: true
+  slowQueryLogging: true
+  transactionTracing: true
+
+metrics:
+  enabled: true
+  path: /actuator/prometheus
+  interval: 15s
+  scrapeTimeout: 10s
+
+grafana:
+  additionalDataSources:
+    - name: Prometheus
+      type: prometheus
+      url: http://monitoring-kube-prometheus-prometheus.monitoring.svc:9090
+      access: proxy
+      isDefault: true
+  enabled: true
+  adminPassword: admin123
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+
+prometheus-node-exporter:
+  enabled: false
