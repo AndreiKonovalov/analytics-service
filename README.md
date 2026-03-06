@@ -208,6 +208,17 @@ curl -X GET "http://localhost:8080/api/v1/analytics/clients/optimized?page=0&siz
 
 Подробная инструкция: [docs/profiling-guide.md](docs/profiling-guide.md).
 
+## 🛠️ Troubleshooting workshop (для стажёров)
+
+Добавлен готовый учебный сценарий для инцидентов:
+- "Сервис медленно отвечает"
+- "Kafka Consumer lag растёт"
+
+Что есть в репозитории:
+- пошаговый сценарий занятия: [docs/troubleshooting/workshop-scenarios.md](docs/troubleshooting/workshop-scenarios.md)
+- генерация нагрузки для кейса slow response: `scripts/troubleshooting/simulate-slow-response.sh`
+- генерация burst-публикации событий в Kafka через producer API: `scripts/troubleshooting/simulate-kafka-burst.sh`
+
 ## 🗃️ Кэширование и Redis
 
 В проект добавлено кэширование с поддержкой Redis (и Caffeine по умолчанию для локальной разработки).
