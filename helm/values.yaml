@@ -97,6 +97,12 @@ app:
       value: "health,metrics,prometheus,info"
     - name: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
       value: "always"
+    - name: OTEL_SERVICE_NAME
+      value: analytics-analytics
+    - name: OTEL_TRACES_EXPORTER
+      value: jaeger
+    - name: OTEL_EXPORTER_JAEGER_ENDPOINT
+      value: http://jaeger-collector:14268/api/traces
 
 serviceAccount:
   create: true

@@ -8,6 +8,7 @@ COPY gradlew .
 COPY gradle gradle
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
+COPY opentelemetry-javaagent.jar /otel/opentelemetry-javaagent.jar
 
 # Копируем исходный код
 COPY src src
@@ -45,4 +46,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 EXPOSE 8080
 
 # Запуск приложения
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
+ENTRYPOINT ["sh", "-c", "java -javaagent:/otel/opentelemetry-javaagent.jar $JAVA_OPTS -jar /app/app.jar"]
